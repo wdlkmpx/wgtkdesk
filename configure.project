@@ -1,0 +1,163 @@
+#!/bin/sh
+
+# Project name and version
+PACKAGE="wgtkdesk"
+VERSION="2022.10.17"
+PACKAGE_URL=''
+
+# Flags that will be used in all makefiles that compile code...
+PROJECT_CFLAGS='-Wall -g -O2' # -Wextra -Wno-unused-parameter -Wno-missing-field-initializers
+PROJECT_CXXFLAGS="${PROJECT_CFLAGS}"
+PROJECT_CPPFLAGS=''
+PROJECT_LDFLAGS=''
+PROJECT_LXXFLAGS=''
+PROJECT_LIBS=''
+
+APPDIR=src
+
+WAPPS=$(ls ${W_SCRIPTDIR}/${APPDIR} | grep -v '\.' | tr '\n' ' ')
+
+# Project type, use C to avoid checking for C++ compiler and stuff
+# supported values: C, C++ ("" = C++)
+PROJECT_TYPE=C
+
+# config.h: custom extra lines
+w_config_h_extra_lines=""
+
+# config.mk: custom extra lines
+w_config_mk_extra_lines=""
+
+
+# configure the project using the commands provided
+# by `configure` and other scripts and commands/tools
+w_main_func()
+{
+    # GCC=yes if gcc has been detected
+    # if the Makefiles are only compatible with GNU make, use w_require_gnu_make
+
+    # check required headers and exit on error
+    w_check_headers_required stdio.h
+
+    case $WAPPS in *gdmap*)
+        w_check_headers sys/time.h ;;
+    esac
+}
+
+w_finish_func()
+{
+    if [ -z "$CONFIG_WAPPS" ] || [ "$CONFIG_WAPPS" = "all" ] ; then
+        wterminal='lxterminal'
+        if [ -z "$VTE_CFLAGS" ] ; then
+            echo "* Disabling $wterminal"
+        else
+            WAPPS="$WAPPS ${wterminal}"
+        fi
+    fi
+    (
+    printf "WAPPS = "
+    for i in $WAPPS ; do
+        printf "${APPDIR}/%s " "$i"
+    done
+    printf "\n"
+    #--
+    #echo "WAPPS = $WAPPS"
+    echo 'WGTK_CFLAGS = -I${top_srcdir}/0libwgtk'        # -I../
+    echo 'WGTK_LIBS   = -L${top_srcdir}/0libwgtk -lwgtk' # -L../
+    ) >> config.mk
+    echo "WAPPS=\"$WAPPS\"" >> config.sh
+    echo
+    echo "Apps to build:"
+    echo "   $WAPPS "
+    rm -f ${APPDIR}/config.h ${APPDIR}/config.mk
+    ln -s ../config.h ${APPDIR}/config.h
+    ln -s ../config.mk ${APPDIR}/config.mk
+}
+
+#=====================================================================
+# --with-apps
+
+extra_packages_opts="$extra_packages_opts apps"
+
+opt_pkg_print_apps()
+{
+	echo "  --with-apps[=all]       specify apps to build and install (autodetect)"
+}
+
+opt_configure_apps()
+{
+	unset CONFIG_WAPPS
+	for xparamx in $@
+	do
+		case $xparamx in
+		--with-apps) exit_error "Usage is: --with-apps=app1,app2,.." ;;
+		--with-apps=*)
+			CONFIG_WAPPS=$(getvalue $xparamx | tr ',' ' ')
+			if [ -z "$CONFIG_WAPPS" ] ; then
+				exit_error "Usage is: --with-apps=app1,app2,.."
+			fi
+			if [ "$CONFIG_WAPPS" = "all" ] ; then
+				return # ok
+			fi
+			for i in $CONFIG_WAPPS
+			do
+				if [ ! -f ${APPDIR}/${i}/Makefile ] ; then
+					echo "$i is not a valid app"
+					exit 1
+				fi
+			done
+			WAPPS=${CONFIG_WAPPS}
+			;;
+		esac
+	done
+}
+
+# need to process this before everything else
+# so that we can avoid processing unneeded stuff
+opt_configure_apps "$@"
+
+#=====================================================================
+# special scripts for optional features and various tasks
+# checks are run after w_main_func
+#
+# - source w_conf/xxx script to support a specific feature
+# - these scripts are meant to be generic, so any project can add them
+# - most of these scripts can handle --enable/--disable cmd options
+#   to make it easier to replace autoconf
+#
+# In most cases, if a feature is enabled, it will be defined in config.h
+#   #define HAVE_ZLIB 1
+# And config.mk
+#   ZLIB_CFLAGS =
+#   ZLIB_LIBS   =
+
+#GETTEXT_PACKAGE="$PACKAGE"
+#. w_conf/gettext
+
+W_GLIB_MIN_VERSION=2.32
+. w_conf/glib
+
+#W_GTK_IS_OPTIONAL=yes
+##--
+#W_GTK_DEFAULT_VERSION=3
+W_GTK2_MIN_VERSION='2.24'
+W_GTK3_MIN_VERSION='3.14'
+#W_GTK4_MIN_VERSION=''
+##-- support only 1 version
+#W_GTK_ONLY_VERSION=2
+#W_GTK_MIN_VERSION=2.24
+. w_conf/gtk
+
+
+#case $WAPPS in *gdmap*)
+#    W_LIBXML2_IS_OPTIONAL=yes
+#    #W_LIBXML2_MIN_VERSION=
+#    . w_conf/libxml2
+#    ;;
+#esac
+
+case $WAPPS in *lxterminal*)
+W_VTE_IS_OPTIONAL=yes
+#W_VTE_MIN_VERSION=
+. w_conf/vte
+esac
+

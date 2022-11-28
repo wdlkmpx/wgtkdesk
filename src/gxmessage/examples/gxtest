@@ -1,0 +1,84 @@
+#!/bin/bash
+# gxmessage tests and examples
+
+# use xmessage if gxmessage isn't available
+XMESSAGE=${XMESSAGE:-$(which gxmessage)} || MESSAGE=xmessage
+XMESSAGE=$(basename "$XMESSAGE")
+
+$XMESSAGE A few $XMESSAGE tests
+$XMESSAGE -center "The -center option"
+$XMESSAGE -center -default okay "The default button has focus"
+
+$XMESSAGE -center -buttons "one:1,two:2,three:3" \
+  "Button labels and return values"
+echo $?
+
+$XMESSAGE -center -buttons 'Hello\, world:42,This\, as you see\, is a test:43' \
+  "Buttons containing escaped characters"
+echo $?
+
+$XMESSAGE -center -print -buttons 'one\: 10:10,two\: 20:20,three\: 30:30,hello\, world\: 40:40' \
+  "More buttons with escaped characters"
+
+$XMESSAGE -center \
+  -buttons "GTK_STOCK_HELP,GTK_STOCK_OK,GTK_STOCK_CANCEL,GTK_STOCK_CLOSE" \
+  -default GTK_STOCK_CLOSE "Some GTK stock buttons"
+echo $?
+
+$XMESSAGE -center -buttons "" -timeout 3 "The -timeout option..."
+echo $?
+
+$XMESSAGE -center -buttons "_Red,_Green,_Blue" -default _Blue \
+  "Keyboard accelerators (try pressing ALT to see them)"
+
+$XMESSAGE -center -file "$0" -default okay
+
+echo "geometry +100+100"
+$XMESSAGE -help | $XMESSAGE -file - -default okay -geom +100+100
+
+echo "geometry -0-0"
+$XMESSAGE -help | $XMESSAGE -file - -default okay -geom -0-0
+
+echo "geometry 300x300+100+100"
+$XMESSAGE -help | $XMESSAGE -file - -default okay -geom 300x300+100+100
+
+echo "automatic geometry"
+$XMESSAGE -help | $XMESSAGE -center -file - -default okay
+
+$XMESSAGE -center -fg white -bg '#10191e' -default okay \
+  "The -fg and -bg options"
+
+FONT="monospace bold 12"
+[ "$XMESSAGE" = gxmessage ] || FONT="-misc-fixed-*-*-*-*-*-140-*-*-*-*-*-*"
+$XMESSAGE -center -geometry 500x100 ${FONT:+-font "$FONT"} \
+  "Using -font without upsetting xmessage"
+
+$XMESSAGE - -- dash - test - -- -center - -default okay -
+
+$XMESSAGE -center -display :0 "Testing the -display and -name options" \
+          -name George
+
+echo "Feeding gxmessage a super long button label should cause it to quit with a warning and an exit code of 1, rather than crash in flames..."
+$XMESSAGE "Some text" -buttons $(python -c "print 'A'*115000")
+echo "The exit code was: $?"
+
+if [ "$XMESSAGE" != gxmessage ]
+then
+
+  # skip gxmessage-specific tests if not using gxmessage
+  :
+
+else
+
+  NAME=$($XMESSAGE -center -entry -buttons "" "What's your name?")
+  echo "Hello, $NAME!"
+
+  ME=${HOSTNAME:-Bart}
+  NAME=$($XMESSAGE -center -entrytext "$ME" -buttons "" \
+         "What's my name?");
+  [ "$NAME" = "$ME" ] || echo "You mean I'm not $ME?!"
+
+fi
+
+echo "finished"
+

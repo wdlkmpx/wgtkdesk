@@ -1,0 +1,133 @@
+Author: Jens Peter Secher <jps@debian.org>
+Last-Update: 2010-01-10
+Description: Filename simplification options.
+
+Adds filename simplification options %a, %t, and %l (cf. %A, %t, %L)
+which make all letters lowercase and replace anything but letters,
+digits, and dashes with underscores.
+
+--- a/src/util.c
++++ b/src/util.c
+@@ -450,6 +450,7 @@
+ {
+     unsigned i = 0;
+     int len = 0;
++    int tmplen = 0;
+     char * ret = NULL;
+     int pos = 0;
+     int tnsize = 0;
+@@ -460,9 +461,11 @@
+         {
+             switch (format[i+1])
+             {
++                case 'a':
+                 case 'A':
+                     if (artist) len += strlen(artist);
+                     break;
++                case 'l':
+                 case 'L':
+                     if (album) len += strlen(album);
+                     break;
+@@ -476,6 +479,7 @@
+                 case 'Y':
+                     if (year) len += strlen(year);
+                     break;
++                case 't':
+                 case 'T':
+                     if (title) len += strlen(title);
+                     break;
+@@ -503,6 +507,15 @@
+         {
+             switch (format[i+1])
+             {
++                case 'a':
++                    if (artist)
++                    {
++                        tmplen = strlen(artist);
++                        strncpy(&ret[pos], artist, tmplen);
++                        simplify_chars(ret, pos, pos+tmplen);
++                        pos += tmplen;
++                    }
++                    break;
+                 case 'A':
+                     if (artist)
+                     {
+@@ -510,6 +523,15 @@
+                         pos += strlen(artist);
+                     }
+                     break;
++                case 'l':
++                    if (album)
++                    {
++                        tmplen = strlen(album);
++                        strncpy(&ret[pos], album, tmplen);
++                        simplify_chars(ret, pos, pos+tmplen);
++                        pos += tmplen;
++                    }
++                    break;
+                 case 'L':
+                     if (album)
+                     {
+@@ -530,6 +552,15 @@
+                         pos += strlen(year);
+                     }
+                     break;
++                case 't':
++                    if (title)
++                    {
++                        tmplen = strlen(title);
++                        strncpy(&ret[pos], title, tmplen);
++                        simplify_chars(ret, pos, pos+tmplen);
++                        pos += tmplen;
++                    }
++                    break;
+                 case 'T':
+                     if (title)
+                     {
+@@ -758,6 +789,32 @@
+     }
+ }
+ 
++// makes the specified range within the string lowercase and replaces
++// all problematic characters with underscores
++//
++// str - the string to simplify
++// begin - start index (included)
++// end - end index (not included)
++void simplify_chars(char * str, int begin, int end)
++{
++    int i;
++    int c;
++
++    // sanitize range
++    if (0 > begin)
++        begin = 0;
++    if (strlen(str) < end)
++        end = strlen(str);
++
++    for (i=begin; i<end; ++i)
++    {
++        c = tolower(str[i]);
++        if (!(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-'))
++            c = '_';
++        str[i] = c;
++    }
++}
++
+ // removes leading and trailing whitespace as defined by isspace()
+ //
+ // str - the string to trim
+--- a/src/util.h
++++ b/src/util.h
+@@ -69,3 +69,11 @@
+ // period (dot) because it screws up my file name database software. YMMV
+ // 13may2013: removed '.' from the list, it's a valid character.
+ #define	BADCHARS	"/?*|><:\"\\"
++
++// makes the specified range within the string lowercase and replaces
++// all problematic characters with underscores
++//
++// str - the string to simplify
++// begin - start index (included)
++// end - end index (not included)
++void simplify_chars(char * str, int begin, int end);

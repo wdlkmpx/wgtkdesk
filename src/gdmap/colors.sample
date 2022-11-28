@@ -1,0 +1,30 @@
+# copy this file to ~/.gdmap/colors/default
+
+COLOR1 #FFFF00
+COLOR2 #0FFFFF
+
+ASF    #EE0000
+MPG    #dd0000
+MPEG   #cc0000
+AVI    #BB000
+
+MP3    #00DDDD
+WAV    #00FFFF
+
+JPG    #EEEE00
+JPEG   #EEEE00
+GIF    #DDDD00
+
+H      #00ff00
+HH     #00ff00
+C      #00aa00
+CC     #00aa00
+CPP    #00aa00
+
+bz     #0000AA
+ZIP    #0000AA
+GZ     #0000AA
+TGZ    #0000CC
+O      #BB00BB
+EXE    #FF00FF
+DLL    #DD00DD

@@ -1,0 +1,86 @@
+#!/bin/sh
+# * Public Domain *
+
+# optional variables to set before sourcing this script
+#
+# - W_VTE_IS_OPTIONAL=yes [show --disable-vte in --help msg]
+# - W_VTE_MIN_VERSION=xxx [minimun supported version]
+#
+
+#=======================================
+w_new_option vte VTE
+#=======================================
+
+vte_pc_pkg="vte vte-2.91"
+
+
+opt_print_vte()
+{
+	if [ "$W_VTE_IS_OPTIONAL" = "yes" ] ; then
+		echo "  --disable-vte           do not build VTE support (autodetect)"
+	fi
+}
+
+
+opt_configure_vte()
+{
+	if [ "$W_VTE_IS_OPTIONAL" = "yes" ] ; then
+		enable_vte=check
+	else
+		enable_vte=yes
+		return
+	fi
+
+	for i in $@
+	do
+		case $i in
+		--enable-vte)  enable_vte=yes ;;
+		--disable-vte) enable_vte=no ;;
+		esac
+	done
+}
+
+
+opt_check_vte()
+{
+	if [ "$enable_vte" = "no" ] ; then
+		return
+	fi
+
+	if [ -z "$gtkpc" ] ; then
+		exit_error "\$gtkpc is not set, gtk must be evaluated first"
+	fi
+
+	if [ "$gtkpc" = "gtk1" ] ; then
+        return
+	elif [ "$gtkpc" = "gtk+-2.0" ] ; then
+		vte_pc_pkg="vte"
+	else
+		# gtk+-3.0 / gtk4
+		vte_pc_pkg="vte-2.91"
+	fi
+	pcpkg=${vte_pc_pkg}
+
+	if [ -n "$VTE_CFLAGS" ] || [ -n "$VTE_LIBS" ] ; then
+		echo "Checking for VTE... \$VTE_CFLAGS/\$VTE_LIBS"
+	else
+		if ! w_pkgconfig_check ${pcpkg} ${W_VTE_MIN_VERSION} ; then
+			if [ "$enable_vte" = "yes" ] ; then
+				if [ "$pcpkg" = "vte-2.91" ] ; then
+					echo "- You might want to --enable-gtk2"
+				fi
+				exit_error "pkg-config: $pcpkg was not found"
+			fi
+			return
+		fi
+		if [ ! -f "$pcpkg" ] ; then
+			# $pcpkg must not be a file, otherwise it is a custom xxx-config file
+			VTE_CFLAGS="$(run_pkg_config ${pcpkg} --cflags 2>/dev/null)"
+			VTE_LIBS="$(run_pkg_config ${pcpkg} --libs 2>/dev/null)"
+		fi
+	fi
+
+	config_h_have="$config_h_have VTE"
+	config_mk_flags="$config_mk_flags VTE"
+}
+

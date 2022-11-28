@@ -1,0 +1,60 @@
+#!/bin/bash
+
+. ./0common.sh || exit 1
+
+case $0 in
+    *itemhelp*)
+        # this is for testing purposes, help tips with spaces don't work
+        # because you need to add quotes to the index: "${item_help[1]}"
+        #     in that case you need specify a different command
+        item_help=("--item-help" #index 0
+            "help1" "help2" "help3" "help4" "help5" "help6" "help7"
+            "help8" "help9" "help10" "help11" "help12" "help13" "help14"
+            "help15" "help16" "help17" "help18" "help19" "help20" 
+            "help21" "help22" "help23" "help24" "help25")
+        ;;
+esac
+
+
+result=$(
+$DIALOG --title "XDIALOG BUILDLIST" \
+        --backtitle "A user-built list" \
+        --stdout \
+        --separator "|" ${item_help[0]} \
+        --buildlist "hello, this is a --buildlist..." 0 0 0 \
+            "1"  "Item n° 1" "on"   ${item_help[1]} \
+            "2"  "Item n° 2" "off"  ${item_help[2]} \
+            "3"  "Item n° 3" "on"   ${item_help[3]} \
+            "4"  "Item n° 4" "on"   ${item_help[4]} \
+            "5"  "Item n° 5" "off"  ${item_help[5]} \
+            "6"  "Item n° 6" "on"   ${item_help[6]} \
+            "7"  "Item n° 7" "on"   ${item_help[7]} \
+            "8"  "Item n° 8" "on"   ${item_help[8]} \
+            "9"  "Item n° 9" "on"   ${item_help[9]} \
+            "10" "Item n° 10" "on"  ${item_help[10]} \
+            "11" "Item n° 11" "on"  ${item_help[11]} \
+            "12" "Item n° 12" "on"  ${item_help[12]} \
+            "13" "Item n° 13" "on"  ${item_help[13]} \
+            "14" "Item n° 14" "on"  ${item_help[14]} \
+            "15" "Item n° 15" "on"  ${item_help[15]} \
+            "16" "Item n° 16" "on"  ${item_help[16]} \
+            "17" "Item n° 17" "on"  ${item_help[17]} \
+            "18" "Item n° 18" "on"  ${item_help[18]} \
+            "19" "Item n° 19" "on"  ${item_help[19]} \
+            "20" "Item n° 20" "on"  ${item_help[20]} \
+            "21" "Item n° 21" "on"  ${item_help[21]} \
+            "22" "Item n° 22" "off" ${item_help[22]} \
+            "23" "Item n° 23" "off" ${item_help[23]} \
+            "24" "Item n° 24" "off" ${item_help[24]} \
+            "25" "Item n° 25" "unavailable" ${item_help[25]}
+)
+retval=$?
+
+case $retval in
+  0)
+    echo "The user-built list is '$result'.";;
+  1)
+    echo "Cancel pressed.";;
+  255)
+    echo "Box closed.";;
+esac

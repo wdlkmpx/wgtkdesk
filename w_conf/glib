@@ -1,0 +1,78 @@
+#!/bin/sh
+# Public Domain
+
+# optional variables to set before sourcing this script
+#
+# - W_GLIB_IS_OPTIONAL=yes [show --disable-glib in --help msg]
+# - W_GLIB_MIN_VERSION=xxx [minimun supported version, .pc file is required]
+#
+
+#=======================================
+w_new_option glib GLIB
+#=======================================
+
+glib_pc_pkg="glib-2.0"
+
+
+opt_print_glib()
+{
+	if [ "$W_GLIB_IS_OPTIONAL" = "yes" ] ; then
+		echo "  --disable-glib           do not build GLIB support (autodetect)"
+	fi
+}
+
+
+opt_configure_glib()
+{
+	if [ "$W_GLIB_IS_OPTIONAL" = "yes" ] ; then
+		enable_glib=check
+	else
+		enable_glib=yes
+		return
+	fi
+
+	for i in $@
+	do
+		case $i in
+		--enable-glib)  enable_glib=yes ;;
+		--disable-glib) enable_glib=no ;;
+		esac
+	done
+}
+
+
+opt_check_glib()
+{
+	if [ "$enable_glib" = "no" ] ; then
+		return
+	fi
+
+	if [ -n "$GLIB_CFLAGS" ] || [ -n "$GLIB_LIBS" ] ; then
+		echo "Checking for GLIB... \$GLIB_CFLAGS/\$GLIB_LIBS"
+	else
+		pcpkg=
+		for onepkg in ${glib_pc_pkg}
+		do
+			if w_pkgconfig_check ${onepkg} ${W_GLIB_MIN_VERSION} ; then
+				pcpkg=${onepkg}
+				break
+			fi
+		done
+
+		if [ -z "$pcpkg" ] ; then
+			if [ "$enable_glib" = "yes" ] ; then
+				exit_error "pkg-config: glib was not found"
+			fi
+			return
+		fi
+		if [ ! -f "$pcpkg" ] ; then
+			# $pcpkg must not be a file, otherwise it is a custom xxx-config file
+			GLIB_CFLAGS="$(run_pkg_config ${pcpkg} --cflags 2>/dev/null)"
+			GLIB_LIBS="$(run_pkg_config ${pcpkg} --libs 2>/dev/null)"
+		fi
+	fi
+
+	config_h_have="$config_h_have GLIB"
+	config_mk_flags="$config_mk_flags GLIB"
+}
+

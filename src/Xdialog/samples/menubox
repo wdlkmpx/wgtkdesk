@@ -1,0 +1,58 @@
+#!/bin/sh
+
+. ./0common.sh || exit 1
+
+
+case $0 in
+    *notags*) no_tags="--no-tags" ;;
+    *itemhelp*)
+        # this is for testing purposes, help tips with spaces don't work
+        # because you need to add quotes to the index: "${item_help[1]}"
+        #     in that case you need specify a different command
+        item_help=("--item-help" # index 0
+            "help1" "help2"
+            "help3" "help4" "help5" "help6" "help7" "help8" "help9"
+            "help10" "help11" "help12" "help13" "help14" "help15" "help16")
+            ;;
+esac
+
+
+$DIALOG --title "MENU BOX" ${no_tags}  \
+        --default-item "14" ${item_help[0]} \
+        --menu "Hi, this is a menu box. You can use this to
+present a list of choices for the user to
+choose. If there are more items than can fit
+on the screen, the menu will be scrolled.
+Try it now!\n
+Choose 1 item:" 0 0 0 \
+        "1"  "The Great Unix Clone for 386/486" ${item_help[1]} \
+        "2" "Another free Unix Clone for 386/486"  ${item_help[2]} \
+        "3" "IBM OS/2"  ${item_help[3]} \
+        "4" "Microsoft Windows NT"  ${item_help[4]} \
+        "5"  "IBM PC DOS"  ${item_help[5]} \
+        "6"  "Microsoft DOS"  ${item_help[6]} \
+        "7"  "Item7"  ${item_help[7]} \
+        "8"  "Item8"  ${item_help[8]} \
+        "9"  "Item9"  ${item_help[9]} \
+        "10"  "Item10"  ${item_help[10]} \
+        "11"  "Item11"  ${item_help[11]} \
+        "12"  "Item12"  ${item_help[12]} \
+        "13"  "Item13"  ${item_help[13]} \
+        "14"  "Item14"  ${item_help[14]} \
+        ""  "no tag"  ${item_help[15]} \
+        ""  "no tag2"  ${item_help[16]} \
+2> /tmp/menu.tmp.$$
+        
+retval=$?
+
+choice=`cat /tmp/menu.tmp.$$`
+rm -f /tmp/menu.tmp.$$
+
+case $retval in
+  0)
+    echo "'$choice' chosen.";;
+  1)
+    echo "Cancel pressed.";;
+  255)
+    echo "Box closed.";;
+esac

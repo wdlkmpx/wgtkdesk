@@ -1,0 +1,47 @@
+#!/bin/sh
+# don't use --menubox, --menu is compatible with the curses dialog
+# --check "$CHECKER" is not supported by the ncurses dialog
+
+. ./0common.sh || exit 1
+
+
+TITLE="Screen saver"
+PROMPT="Please choose the mode:"
+CHECKER="Check to lock the screen"
+MENU=/tmp/menu.$$
+
+cat << EOF >$MENU
+#!/bin/sh
+CHOICE=\$($DIALOG --title "$TITLE" --stdout --no-tags --check "$CHECKER" --default-item "random" --menu "$PROMPT" 0 0 7 \\
+EOF
+xlock -help | awk --source '{ if (substr($1,1,1) != "-" && $1 != "where" && $1 != "" && $1 != "xlock" && $1 != "usage:") print $1 " " $1 " \\" }' >>$MENU
+cat << EOF2 >>$MENU
+)
+ret=\$?
+echo \$CHOICE
+exit \$ret
+EOF2
+
+chmod +x $MENU
+CHOICE=`$MENU`
+ret=$?
+rm -f $MENU
+
+if (( $ret != 0 )) ; then
+	exit 0
+fi
+
+for i in $CHOICE ; do
+	case $i in
+		unchecked)
+			NOLOCK="-nolock"
+			;;
+		checked)
+			NOLOCK=""
+			;;
+		*)
+			MODE=$i
+			;;
+	esac
+done
+xlock $NOLOCK -mode $MODE

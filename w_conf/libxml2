@@ -1,0 +1,78 @@
+#!/bin/sh
+# Public Domain
+
+# optional variables to set before sourcing this script
+#
+# - W_LIBXML2_IS_OPTIONAL=yes [show --disable-libxml2 in --help msg]
+# - W_LIBXML2_MIN_VERSION=xxx [minimun supported version, .pc file is required]
+#
+
+#=======================================
+w_new_option libxml2 LIBXML2
+#=======================================
+
+libxml2_pc_pkg="libxml-2.0"
+
+
+opt_print_libxml2()
+{
+	if [ "$W_LIBXML2_IS_OPTIONAL" = "yes" ] ; then
+		echo "  --disable-libxml2           do not build LIBXML2 support (autodetect)"
+	fi
+}
+
+
+opt_configure_libxml2()
+{
+	if [ "$W_LIBXML2_IS_OPTIONAL" = "yes" ] ; then
+		enable_libxml2=check
+	else
+		enable_libxml2=yes
+		return
+	fi
+
+	for i in $@
+	do
+		case $i in
+		--enable-libxml2)  enable_libxml2=yes ;;
+		--disable-libxml2) enable_libxml2=no ;;
+		esac
+	done
+}
+
+
+opt_check_libxml2()
+{
+	if [ "$enable_libxml2" = "no" ] ; then
+		return
+	fi
+
+	if [ -n "$LIBXML2_CFLAGS" ] || [ -n "$LIBXML2_LIBS" ] ; then
+		echo "Checking for LIBXML2... \$LIBXML2_CFLAGS/\$LIBXML2_LIBS"
+	else
+		pcpkg=
+		for onepkg in ${libxml2_pc_pkg}
+		do
+			if w_pkgconfig_check ${onepkg} ${W_LIBXML2_MIN_VERSION} ; then
+				pcpkg=${onepkg}
+				break
+			fi
+		done
+
+		if [ -z "$pcpkg" ] ; then
+			if [ "$enable_libxml2" = "yes" ] ; then
+				exit_error "pkg-config: libxml2 was not found"
+			fi
+			return
+		fi
+		if [ ! -f "$pcpkg" ] ; then
+			# $pcpkg must not be a file, otherwise it is a custom xxx-config file
+			LIBXML2_CFLAGS="$(run_pkg_config ${pcpkg} --cflags 2>/dev/null)"
+			LIBXML2_LIBS="$(run_pkg_config ${pcpkg} --libs 2>/dev/null)"
+		fi
+	fi
+
+	config_h_have="$config_h_have LIBXML2"
+	config_mk_flags="$config_mk_flags LIBXML2"
+}
+

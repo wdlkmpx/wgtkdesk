@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Graphical Disk Map
+Comment=Display disk space using tree maps
+Exec=gdmap
+Icon=gdmap
+Terminal=false
+Type=Application
+Categories=Filesystem;GTK;System
+Keywords=gdmap;usage

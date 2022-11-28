@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. ./0common.sh || exit 1
+
+$DIALOG --title "TAIL BOX" \
+        --backtitle "A simple tail box..." \
+        --tailbox /var/log/messages 24 64
+
+case $? in
+  0)
+    echo "OK.";;
+  1)
+    echo "Cancel pressed.";;
+  255)
+    echo "Box closed.";;
+esac

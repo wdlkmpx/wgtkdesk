@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=LXcolor
+Icon=lxcolor.png
+Comment=color chooser and picker
+Exec=lxcolor
+Terminal=false
+Type=Application
+Categories=Graphics
+GenericName=LXcolor

@@ -1,0 +1,86 @@
+gMeasures v0.7
+(C)2007 Paul Schuurmans
+
+
+Introduction
+============
+gMeasures is a simple utility to convert weights and measures.  It can also 
+convert Celsius / Fahrenheit temperatures.
+
+
+Installation
+============
+The configure script has been omitted from this package due to its size 
+and the fact that it doesn't work on all systems.  Instead, you run an 
+autogen script which creates the configure script.  If you need to pass 
+any parameters to the configure script, you can do so on the autogen.sh 
+line.  Other than that, installation is pretty much the same as usual:
+
+  ./configure --prefix=/usr
+  make
+  make install
+
+
+Using gMeasures
+===============
+
+To calculate weights and measures:
+----------------------------------
+1. Enter the amount in the first entry field (top left) and select the unit to 
+convert in the first dropdown listbox.
+2. In the second dropdown listbox, select the unit to convert to.
+
+To edit an existing conversion:
+-------------------------------
+1. Use the dropdown listboxes to select the conversion.
+2. Press the [Edit/Add] button.
+3. Edit the "Equals" field.
+4. Press the [OK] button.
+
+To add a new conversion:
+------------------------
+1. Press the [Edit/Add] button.
+2. Edit any or all of the fields as necessary.  Note: if you edit only the 
+"Equals" field, it counts as an edit (i.e., no new conversion is added).
+3. Press the [OK] button.
+
+To delete a conversion:
+-----------------------
+Note: Read "The Edit/Add Dialog" below before doing this for the first time.
+1. Use the dropdown listboxes to select the conversion.
+2. Press the [Edit/Add] button.
+3. Press the [Delete] button.
+
+To calculate temperatures:
+--------------------------
+1. Enter the amount of degrees in either the Celsius or Fahrenheit entry field.
+
+
+The Edit/Add Dialog
+===================
+When you press the [OK] or [Delete] button, gMeasures will automatically 
+write the current configuration to a file named .gmeasures.cfg in your home 
+directory.  Note that there is no confirmation after pressing either of these 
+buttons.  You can revert back to the original 101 built-in conversions by 
+deleting the .gmeasures.cfg file, but that won't restore any of your own 
+conversions that you've added or edited.  So please be careful, especially 
+before pressing the [Delete] button.
+
+
+Locales
+=======
+By default, gMeasures uses the "C" locale.  If your locale uses a comma instead 
+of a decimal point, and you want a localized version of this program, here are 
+the steps to take:
+
+1. In the main.c file, go to main() and uncomment the gtk_set_locale() line.
+2. Also in the main.c file, go to AppReadWriteConfig() and replace the decimal 
+points in the defs array with commas.
+3. Recompile the program.
+
+
+Known Quirks
+============
+- Limited accuracy.  Decimal fractions exceeding 5 digits may or may not be 
+accurate.
+
