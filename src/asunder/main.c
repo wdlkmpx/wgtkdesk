@@ -918,8 +918,10 @@ void refresh_thread_body(char * cdrom, int force)
         // clear out the previous list of matches
         if (gbl_disc_matches != NULL)
         {
-            for (GList * curr = g_list_first(gbl_disc_matches); curr != NULL; curr = g_list_next(curr))
+            GList * curr;
+            for (curr = g_list_first(gbl_disc_matches); curr != NULL; curr = g_list_next(curr)) {
                 cddb_disc_destroy((cddb_disc_t *)curr->data);
+            }
             g_list_free(gbl_disc_matches);
         }
         gbl_disc_matches = disc_matches;

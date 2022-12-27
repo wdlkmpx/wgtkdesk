@@ -4,6 +4,8 @@
 
 /* You may change the following defines IOT customize Xdialog... */
 
+#define BUILDLIST_USE_LISTBOX 1 /* tests */
+
 #define XDIALOG "Xdialog"	/* Default Xdialog window title */
 
 #define INFO_TIME 1000		/* the number of ms an infobox should stay up*/

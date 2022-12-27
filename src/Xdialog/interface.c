@@ -178,9 +178,9 @@ static void open_window(void)
     /* Apply the custom GTK+ theme, if any. */
     parse_rc_file();
 
-    if (Xdialog.wmclass[0] != 0)
+    if (Xdialog.wmclass[0] != 0) {
         gtk_window_set_role (GTK_WINDOW(window), Xdialog.wmclass);
-
+    }
     /* Set default events handlers */
     g_signal_connect (G_OBJECT(window), "destroy",
                       G_CALLBACK(destroy_event), NULL);
@@ -420,7 +420,7 @@ static GtkWidget *set_button(gchar *default_text,
             g_signal_connect_after (G_OBJECT(button), "clicked",
                                     G_CALLBACK(exit_help), NULL);
             break;
-		case 3: // previous
+        case 3: // previous
             g_signal_connect_after (G_OBJECT(button), "clicked",
                                     G_CALLBACK(exit_previous), NULL);
             break;
@@ -560,53 +560,20 @@ static GtkWidget *set_scrolled_list (GtkWidget *box, gint xsize, gint list_size,
     GtkWidget *scrollwin;
     GList *igl;
     listname *listitem;
-#if GTK_CHECK_VERSION(2,0,0)
-    // liststore
-    GtkListStore *store;
-    GtkTreeIter iter;
-    store = gtk_list_store_new (2,
-                                G_TYPE_STRING,   // name
-                                G_TYPE_POINTER); // listname*
-    for (igl = glitems; igl != NULL; igl = igl->next)
-    {
-        listitem = (listname *) igl->data;
-        gtk_list_store_append (store, &iter);
-        gtk_list_store_set (store, &iter,
-                            0, listitem->name,
-                            1, listitem,
-                            -1);
-    }
-    // GtkTreeView
-    GtkCellRenderer *renderer;
-    GtkTreeViewColumn *column;
-    listbox = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
-    g_object_unref (G_OBJECT(store));
-    gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(listbox), FALSE);
-
-    renderer = gtk_cell_renderer_text_new();
-    column = gtk_tree_view_column_new_with_attributes ("", renderer,
-                                                       "text", 0, NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW(listbox), column);
-
+#if GTK_CHECK_VERSION(3,10,0) && defined(BUILDLIST_USE_LISTBOX)
+    listbox = gtk_list_box_new ();
+#elif GTK_CHECK_VERSION(2,0,0)
+    listbox = w_gtk_listbox_simple_new (TRUE); // GtkTreeView in GTK2+
 #else // -- GTK1 --
-    GtkWidget *item; // GtkListItem
-    GList *gtklistitems = NULL;
+    listbox = w_gtk_listbox_simple_new (TRUE); // GtkCList in GTK1
+    ///listbox = gtk_list_new(); // GtkList
+#endif
     for (igl = glitems; igl != NULL; igl = igl->next)
     {
         listitem = (listname *) igl->data;
-        item = gtk_list_item_new_with_label (listitem->name);
-        g_object_set_data (G_OBJECT(item), "listitem", (gpointer) listitem);
-        gtk_widget_show(item);
-        gtklistitems = g_list_append (gtklistitems, item);
-        if (Xdialog.tips == 1 && strlen(listitem->tips) > 0) {
-            gtk_widget_set_tooltip_text (item, listitem->tips);
-        }
+        w_gtk_listbox_append (listbox, listitem->name, listitem);
     }
-    // GtkList
-    listbox = gtk_list_new();
-    gtk_list_set_selection_mode (GTK_LIST(listbox), GTK_SELECTION_EXTENDED);
-    gtk_list_append_items (GTK_LIST(listbox), gtklistitems);
-#endif
+    w_gtk_listbox_set_selection_mode (listbox, GTK_SELECTION_MULTIPLE);
     scrollwin = w_gtk_widget_set_scrolled_window (listbox, GTK_WIDGET(box));
     set_list_size (scrollwin, xsize, list_size, spacing);
     return listbox;
@@ -1330,9 +1297,7 @@ void create_rangebox(gchar *optarg, gchar *options[], gint ranges)
             deflt = min;
     }
 
-    Xdialog.widget1 = (GtkWidget *) set_horizontal_slider(Xdialog.vbox,
-                                                    deflt, min, max);
-
+    Xdialog.widget1 = set_horizontal_slider (Xdialog.vbox, deflt, min, max);
     Xdialog.widget2 = Xdialog.widget3 = NULL;
 
     if (ranges > 1) {
@@ -1340,9 +1305,7 @@ void create_rangebox(gchar *optarg, gchar *options[], gint ranges)
         min = atoi(options[5]);
         max = atoi(options[6]);
         deflt = atoi(options[7]);
-
-        Xdialog.widget2 = (GtkWidget *) set_horizontal_slider(Xdialog.vbox,
-                                                        deflt, min, max);
+        Xdialog.widget2 = set_horizontal_slider (Xdialog.vbox, deflt, min, max);
     }
 
     if (ranges > 2) {
@@ -1350,10 +1313,8 @@ void create_rangebox(gchar *optarg, gchar *options[], gint ranges)
         min = atoi(options[9]);
         max = atoi(options[10]);
         deflt = atoi(options[11]);
-
-        Xdialog.widget3 = (GtkWidget *) set_horizontal_slider(Xdialog.vbox,
-                                                            deflt, min, max);
-	}
+        Xdialog.widget3 = set_horizontal_slider (Xdialog.vbox, deflt, min, max);
+    }
 
     button_ok = set_all_buttons(FALSE, TRUE);
     g_signal_connect (G_OBJECT(button_ok), "clicked", G_CALLBACK(rangebox_exit), NULL);
@@ -1863,7 +1824,7 @@ void create_treeview (gchar *optarg, gchar *options[], gint list_size)
         status = options[params*i+2];
 
         item = gtk_tree_item_new_with_label (Xdialog.array[i].name);
-        g_object_set_data (G_OBJECT(item), "listitem", (gpointer) &Xdialog.array[i]);
+        g_object_set_data (G_OBJECT(item), "itemdata", (gpointer) &Xdialog.array[i]);
 
         level = atoi(options[params*i+3]);
         if (i > 0) {
@@ -2154,8 +2115,8 @@ void create_colorsel(gchar *optarg, int *rgb)
     /* If requested, add a check button into the colorsel_dlg action area */
 #if GTK_CHECK_VERSION(2,0,0)
     set_check_button (gtk_dialog_get_action_area (GTK_DIALOG (colorsel_dlg)));
-#else // -- GTK1 --: GtkColorSelectionDialog doesn't have action area
-    set_check_button (GTK_WIDGET(Xdialog.vbox));
+#else // -- GTK1 --: GtkColorSelectionDialog's action area is the ok button's parent
+    set_check_button (GTK_COLOR_SELECTION_DIALOG(colorsel_dlg)->ok_button->parent);
 #endif
 
     /* Set the window size and placement policy */

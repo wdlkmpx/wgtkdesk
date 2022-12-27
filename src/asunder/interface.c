@@ -59,6 +59,7 @@ GtkWidget *create_main (void)
     GtkWidget* statusLbl;
     GtkWidget *album_genre;			// lnr
     GtkWidget *genre_label;			// lnr
+    int i;
     
     main_win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title (GTK_WINDOW (main_win), "Asunder");
@@ -164,7 +165,7 @@ GtkWidget *create_main (void)
     gtk_box_pack_start(GTK_BOX (tn_hbox), tn_combo_width, FALSE, TRUE, 0);
 
     char buff[2];
-    for (int i = 1; i <= 4; ++i) {
+    for (i = 1; i <= 4; ++i) {
         snprintf(buff, 2, "%d", i);
         gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(tn_combo_width), buff);
     }

@@ -15,7 +15,7 @@ PROJECT_LIBS=''
 
 APPDIR=src
 
-WAPPS=$(ls ${W_SCRIPTDIR}/${APPDIR} | grep -v '\.' | tr '\n' ' ')
+WAPPS=$(ls ${WCONF_SCRIPTDIR}/${APPDIR} | grep -v '\.' | tr '\n' ' ')
 
 # Project type, use C to avoid checking for C++ compiler and stuff
 # supported values: C, C++ ("" = C++)

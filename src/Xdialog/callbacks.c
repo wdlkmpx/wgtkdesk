@@ -1001,7 +1001,7 @@ void print_tree_selection (GtkButton *button, gpointer data)
     GtkTree *tree = GTK_TREE(Xdialog.widget1);
     GList *list   = tree->selection;
     // list->data = GtkTreeItem
-    rowdata = (listname*) g_object_get_data (G_OBJECT(list->data), "listitem");
+    rowdata = (listname*) g_object_get_data (G_OBJECT(list->data), "itemdata");
 #endif
 
     g_return_if_fail (rowdata != NULL);
@@ -1025,7 +1025,7 @@ void tree_selection_changed (GtkWidget *tree)
 #else // -- GTK1 --
     GList *list   = GTK_TREE(tree)->selection;
     // list->data = GtkTreeItem
-    rowdata = (listname*) g_object_get_data (G_OBJECT(list->data), "listitem");
+    rowdata = (listname*) g_object_get_data (G_OBJECT(list->data), "itemdata");
 #endif
     if (rowdata) {
         fprintf (stderr, "%s\n", rowdata->name);
@@ -1042,24 +1042,10 @@ void buildlist_sensitive_buttons (void)
 {
     // this is called after each glist update so to
     // set the proper (in)sensitive status onto the Add/Remove buttons.
-    gboolean enabled1, enabled2;
-#if GTK_CHECK_VERSION(2,0,0)
-    GtkTreeModel *model1, *model2;
-    GtkTreeIter iter1, iter2;
-    model1 = gtk_tree_view_get_model (GTK_TREE_VIEW(Xdialog.widget1));
-    model2 = gtk_tree_view_get_model (GTK_TREE_VIEW(Xdialog.widget2));
-
-    enabled1 = gtk_tree_model_get_iter_first (model1, &iter1);
-    enabled2 = gtk_tree_model_get_iter_first (model2, &iter2);
-
-    gtk_widget_set_sensitive (Xdialog.widget3, enabled1);
-    gtk_widget_set_sensitive (Xdialog.widget4, enabled2);
-#else // -- GTK1 --
-    enabled1 = g_list_length(GTK_LIST(Xdialog.widget1)->children) != 0;
-    enabled2 = g_list_length(GTK_LIST(Xdialog.widget2)->children) != 0;
-    gtk_widget_set_sensitive (Xdialog.widget3, enabled1);
-    gtk_widget_set_sensitive (Xdialog.widget4, enabled2);
-#endif
+    gboolean empty1 = w_gtk_listbox_get_is_empty (Xdialog.widget1);
+    gboolean empty2 = w_gtk_listbox_get_is_empty (Xdialog.widget2);
+    gtk_widget_set_sensitive (Xdialog.widget3, !empty1);
+    gtk_widget_set_sensitive (Xdialog.widget4, !empty2);
 }
 
 
@@ -1075,34 +1061,9 @@ void buildlist_add_or_remove (GtkButton *button, gpointer data)
         listsrc  = Xdialog.widget1;
         listdest = Xdialog.widget2;
     }
-#if GTK_CHECK_VERSION(2,0,0)
-    GtkTreeIter itersrc, iterdest;
-    GtkTreeModel *modelsrc, *modeldest;
-    GtkTreeSelection* selection;
-    listname *rowdata;
-
-    modelsrc  = gtk_tree_view_get_model (GTK_TREE_VIEW(listsrc));
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(listsrc));
-    modeldest = gtk_tree_view_get_model (GTK_TREE_VIEW(listdest));
-
-    if (gtk_tree_selection_get_selected(selection, &modelsrc, &itersrc))
-    {
-        gtk_tree_model_get (modelsrc, &itersrc,
-                            1, &rowdata, -1);
-        gtk_list_store_remove (GTK_LIST_STORE(modelsrc), &itersrc);
-        //--
-        gtk_list_store_append (GTK_LIST_STORE(modeldest), &iterdest);
-        gtk_list_store_set (GTK_LIST_STORE(modeldest), &iterdest,
-                            0, rowdata->name,
-                            1, rowdata,
-                            -1);
-    }
-#else // -- GTK1 --
-    GList *selected;
-    selected = g_list_copy (GTK_LIST(listsrc)->selection);
-    gtk_list_remove_items_no_unref (GTK_LIST(listsrc), selected);
-    gtk_list_append_items (GTK_LIST(listdest), selected);
-#endif
+    //--
+    w_gtk_listbox_simple_move_selected_to_dest_list (listsrc, listdest);
+    //--
     buildlist_sensitive_buttons(); 
 }
 
@@ -1110,40 +1071,22 @@ void buildlist_add_or_remove (GtkButton *button, gpointer data)
 void buildlist_print_list (GtkButton *button, gpointer data)
 {
     gboolean flag = FALSE;
+    GList *rows_data = w_gtk_listbox_get_all_rows_data (Xdialog.widget2);
+    GList *igl;
     listname *rowdata;
-#if GTK_CHECK_VERSION(2,0,0)
-    GtkTreeModel *model;
-    GtkTreeIter iter;
-    gboolean valid;
-    model = gtk_tree_view_get_model (GTK_TREE_VIEW(Xdialog.widget2));
-    valid = gtk_tree_model_get_iter_first(model, &iter);
-    while (valid)
+    for (igl = rows_data; igl != NULL; igl = igl->next)
     {
-        gtk_tree_model_get (model, &iter,
-                            1, &rowdata, -1);
+        rowdata = (listname*) igl->data;
         if (flag) {
             fprintf(Xdialog.output, "%s", Xdialog.separator);
         }
         fprintf (Xdialog.output, "%s", rowdata->tag);
         flag = TRUE;
-        valid = gtk_tree_model_iter_next (model, &iter);
     }
-#else // -- GTK1 --
-    GList *children = GTK_LIST(Xdialog.widget2)->children;
-    while (children)
-    { // children->data = GtkListItem
-        rowdata = (listname*) g_object_get_data (G_OBJECT(children->data), "listitem");
-        if (flag) {
-            fprintf(Xdialog.output, "%s", Xdialog.separator);
-        }
-        fprintf(Xdialog.output, "%s", rowdata->tag);
-        flag = TRUE;
-        children = g_list_next (children);
-    }
-#endif
     if (flag) {
         fprintf(Xdialog.output, "\n");
     }
+    g_list_free (rows_data);
 }
 
 /* fselect callback */

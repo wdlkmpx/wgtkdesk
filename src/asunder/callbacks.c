@@ -361,6 +361,8 @@ on_edit_capitalize_clicked (void)
 
     GtkTreeIter iter;
     GtkListStore * store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lookup_widget(win_main, "tracklist"))));
+    char *cp;
+
     if (store == NULL)
         return;
 
@@ -380,7 +382,7 @@ on_edit_capitalize_clicked (void)
         if (riptrack)       // Only modify selected tracks
         {
             int start_of_word = 1;
-            for (char *cp = trackartist; *cp; ++cp)
+            for (cp = trackartist; *cp; ++cp)
             {
                 if (isspace(*cp))
                 {
@@ -396,7 +398,7 @@ on_edit_capitalize_clicked (void)
             }
 
             start_of_word = 1;
-            for (char *cp = tracktitle; *cp; ++cp)
+            for (cp = tracktitle; *cp; ++cp)
             {
                 if (isspace(*cp))
                 {

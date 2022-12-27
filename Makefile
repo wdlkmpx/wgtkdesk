@@ -7,7 +7,7 @@ DISTCLEAN_FILES =
 
 include config.mk
 
-DISTCLEAN_FILES += config.h config.mk config.log config.sh apps/config.h apps/config.mk
+DISTCLEAN_FILES += config.h config.mk config.log config.sh src/config.h src/config.mk
 
 MAKEFLAGS += --no-print-directory
 
