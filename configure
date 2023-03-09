@@ -2,16 +2,21 @@
 # Public Domain
 #
 
+WCURDIR=$(pwd)
+WCONF_SCRIPTDIR=$(cd "$(dirname "$0")" ; pwd -P)
+WCONF_CONFIGURE=${WCONF_SCRIPTDIR}/$(basename "$0")
+
+if [ "$WCURDIR" != "$WCONF_SCRIPTDIR" ] ; then
+    echo "Current dir: $WCURDIR"
+    echo "Wconf dir  : $WCONF_SCRIPTDIR"
+    echo "Out-of-tree builds are not supported..."
+    exit 1
+fi
+
 if ! [ -f Makefile ] ; then
 	echo 'Main Makefile is missing, cannot continue'
 	exit 1
 fi
-
-if ! cd $(dirname "$0") ; then
-	exit 1
-fi
-
-WCONF_SCRIPTDIR=$(pwd)
 
 apps_to_check=''
 extra_env_vars=''
@@ -61,10 +66,15 @@ getvalue()
 	echo $1 | cut -f 2 -d '='
 }
 
+include()
+{
+    . ${WCONF_SCRIPTDIR}/w_conf/${1} || exit 1
+}
+
 #==========================================================
 
-if [ -f configure.project ] ; then
-	. ./configure.project
+if [ -f ${WCONF_SCRIPTDIR}/configure.project ] ; then
+	. ${WCONF_SCRIPTDIR}/configure.project
 fi
 
 if [ -z "$PROJECT_TYPE" ] ; then
@@ -229,18 +239,14 @@ set_w_pkg_config()
 	printf "Checking for pkg-config... "
 	W_PKG_CONFIG=''
 	if [ -n "${PKG_CONFIG}" ] ; then
-		W_PKG_CONFIG="$(check_command ${PKG_CONFIG})"
-		if [ -n "$W_PKG_CONFIG" ] ; then
-			echo "$W_PKG_CONFIG (environment)"
-			return 0
-		fi
+		W_PKG_CONFIG="$PKG_CONFIG"
+	else
+		W_PKG_CONFIG="$(check_command pkg-config pkgconf)"
 	fi
-	W_PKG_CONFIG="$(check_command pkg-config pkgconf)"
 	if [ -n "$W_PKG_CONFIG" ] ; then
 		echo "$W_PKG_CONFIG [$($W_PKG_CONFIG --version 2>/dev/null)]"
 	else
 		echo "no"
-		echo "WARNING: missing pkg-config: this a potentially fatal error"
 	fi
 }
 
@@ -277,30 +283,33 @@ w_pkgconfig_check() # $1=<pkg> $2=[min-version]
 	fi
 	if [ -z "$W_PKG_CONFIG" ] ; then
 		echo "no (!!pkg-config is missing!!)"
-		return 1
+		return 1  #error
 	fi
 	#--
-	if [ -n "$pc_pkg_min_ver" ] ; then
-		run_pkg_config ${pc_pkg} --exists --atleast-version=${pc_pkg_min_ver}
-	else
-		run_pkg_config ${pc_pkg} --exists
+	run_pkg_config ${pc_pkg} --exists
+	if [ $? -ne 0 ] ; then
+		echo "no"
+		return 1  #error
 	fi
-	xret=$?
-	if [ $xret -eq 0 ] ; then
-		echo "yes [$(run_pkg_config ${pc_pkg} --modversion)]"
-	else
-		if [ -n "$pc_pkg_min_ver" ] ; then
-			xxzzfound=$(run_pkg_config ${pc_pkg} --modversion 2>/dev/null)
-			if [ -n "$xxzzfound" ] ; then
-				echo "no [found $xxzzfound]"
+	xpkgverx="$(run_pkg_config ${pc_pkg} --modversion 2>/dev/null)"
+	if [ -n "$pc_pkg_min_ver" ] ; then
+		run_pkg_config ${pc_pkg} --atleast-version=${pc_pkg_min_ver}
+		if [ $? -ne 0 ] ; then
+			if [ -n "$xpkgverx" ] ; then
+				echo "no [found $xpkgverx]"
+				return 1  #error
 			else
 				echo "no"
+				return 1  #error
 			fi
-		else
-			echo "no"
 		fi
 	fi
-	return $xret
+	if [ -n "$xpkgverx" ] ; then
+		echo "yes [${xpkgverx}]"
+	else
+		echo "yes"
+	fi
+	return 0  #ok
 }
 
 
@@ -801,7 +810,7 @@ case $OS_TARGET in
 	Linux)   SYSDEFINE='__linux__=1' ;;
 	MinGW)   SYSDEFINE='__MINGW32__=1' ;;
 	FreeBSD) SYSDEFINE='__FreeBSD__=1' ;;
-	Darwub)  SYSDEFINE='__APPLE__=1' ;;
+	Darwin)  SYSDEFINE='__APPLE__=1' ;;
 esac
 
 TARGET_OS="$OS_TARGET"
@@ -1028,7 +1037,7 @@ fi
 
 #==========================================================
 
-. ./config.sh
+. ${WCONF_SCRIPTDIR}/config.sh
 
 #==========================================================
 #                       config.h
@@ -1083,7 +1092,7 @@ fi
 
 for infile in ${w_infiles}
 do
-	./w_conf/00_standard_infile.sh ${infile}
+	${WCONF_SCRIPTDIR}/w_conf/00_standard_infile.sh ${infile}
 done
 
 #==========================================================

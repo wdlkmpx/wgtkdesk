@@ -17,9 +17,8 @@ A collection of small apps for the desktop
 - lxrandr   [GPL2]  https://github.com/lxde/lxrandr
 - lxtask    [GPL2]  https://github.com/lxde/lxtask
 - lxterminal [GPL2] https://github.com/lxde/lxterminal
-- Xdialog    [GPL2] 
+- Xdialog    [GPL2] https://github.com/wdlkmpx/xdialog
 - yad        [GPL2] https://github.com/v1cont/yad/archive/refs/tags/v0.42.0.tar.gz
-
 
 ## Interesting apps to consider
 
